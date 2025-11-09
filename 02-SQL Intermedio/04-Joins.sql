@@ -71,10 +71,54 @@ SELECT
     NATURAL JOIN Artistas a
 ;
 
---  NATURAL JOIN, pero especificando la columna en común:
+-- NATURAL JOIN, pero especificando la columna en común:
 SELECT 
     c.titulo
     ,a.nombre
     FROM Canciones c
     JOIN Artistas a USING (artista_id)
+;
+
+-- Consultar canciones con popularidad mayor a 93 y ver el artista y el género (no aparecen canciones sin artista ni género):
+SELECT 
+    C.titulo AS Cancion
+    ,A.nombre AS Artista
+    ,G.nombre AS Género
+    ,C.popularidad AS Popularidad 
+    FROM Canciones C 
+    INNER JOIN Artistas A ON C.artista_id = A.artista_id
+    INNER JOIN Generos G ON G.genero_id = A.genero_id
+    WHERE C.popularidad > 93
+    ORDER BY C.popularidad DESC
+;
+
+-- Consultar todos los usuarios que hayan o no haya escuchado música, y las canciones con o sin artista y su género esté o no relleno:
+SELECT 
+    U.nombre AS Usuario
+    ,U.pais AS País
+    ,C.titulo AS Canción
+    ,A.nombre AS Artista
+    ,G.nombre AS Género
+    FROM Usuarios U 
+    LEFT JOIN Reproducciones R ON U.usuario_id = R.usuario_id
+    LEFT JOIN Canciones C ON C.cancion_id = R.cancion_id
+    LEFT JOIN Artistas A ON C.artista_id = A.artista_id
+    LEFT JOIN Generos G ON G.genero_id = A.genero_id
+    ORDER BY U.nombre
+;
+
+-- Consultar todos los géneros y artistas, y las cacniones con oyentes únicos por canción:
+SELECT 
+    C.titulo AS Canción
+    ,A.nombre AS Artista
+    ,A.pais AS País_Artista
+    ,G.nombre AS Género
+    ,COUNT(DISTINCT U.usuario_id) AS Total_Oyentes
+    FROM Usuarios U 
+    RIGHT JOIN Reproducciones R ON U.usuario_id = R.usuario_id
+    RIGHT JOIN Canciones C ON C.cancion_id = R.cancion_id
+    RIGHT JOIN Artistas A ON C.artista_id = A.artista_id
+    RIGHT JOIN Generos G ON G.genero_id = A.genero_id
+    GROUP BY G.nombre, A.nombre, A.pais, C.titulo
+    ORDER BY Total_Oyentes DESC
 ;
