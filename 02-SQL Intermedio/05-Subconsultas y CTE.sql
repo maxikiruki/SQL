@@ -146,4 +146,59 @@ SELECT
 
 
 -- USO DE CTEs Recursivos
+-- Consultar la jerarquía de los géneros musicales
+WITH RECURSIVE generos_jerarquia AS (
+   SELECT 
+       genero_id,         
+       nombre,             
+       genero_padre_id,   
+       nivel,              
+       CAST(nombre AS CHAR(1000)) AS ruta  
+   FROM Generos
+   WHERE nivel = 1  
+   UNION ALL
+   SELECT 
+       g.genero_id,           
+       g.nombre,              
+       g.genero_padre_id,     
+       g.nivel,               
+       CONCAT(gj.ruta, ' > ', g.nombre) AS ruta  
+   FROM Generos g
+   JOIN generos_jerarquia gj ON g.genero_padre_id = gj.genero_id  
+)
+SELECT 
+   CONCAT(REPEAT('        ', nivel - 1), nombre) as jerarquia,
+   ruta as ruta_completa,  
+   nivel                   
+FROM generos_jerarquia
+ORDER BY ruta;  
 
+-- Consultar la jerarquía de los géneros musicales:
+WITH RECURSIVE red_amigos AS (
+    SELECT 
+        usuario_id,           
+        amigo_id,            
+        1 as nivel_amistad,  
+        CAST(CONCAT(
+            (SELECT nombre FROM Usuarios WHERE usuario_id = a.usuario_id),
+            ' > ',
+            (SELECT nombre FROM Usuarios WHERE usuario_id = a.amigo_id)
+        ) AS CHAR(1000)) as cadena_amigos
+    FROM Amigos a
+    WHERE usuario_id = 1  
+    UNION ALL
+    SELECT 
+        ra.usuario_id,         
+        a.amigo_id,            
+        ra.nivel_amistad + 1,  
+        CONCAT(ra.cadena_amigos, ' > ', 
+            (SELECT nombre FROM Usuarios WHERE usuario_id = a.amigo_id)
+        )
+    FROM Amigos a
+    JOIN red_amigos ra ON a.usuario_id = ra.amigo_id
+)
+SELECT 
+    nivel_amistad as 'Nivel de Amistad',
+    cadena_amigos as 'Cadena de Conexiones'
+FROM red_amigos
+ORDER BY nivel_amistad;
